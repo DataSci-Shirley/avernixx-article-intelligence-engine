@@ -13,6 +13,18 @@ from datetime import datetime
 from io import BytesIO
 import pytz
 
+# ─── SESSION STATE — MUST BE FIRST BEFORE CREWAI LOADS ───────────────────────
+# CrewAI's internal EventsBus fires in a background thread immediately on import.
+# If session state is not initialised before that happens, it throws:
+# "st.session_state has no attribute raw_trace"
+# Fix: initialise all session keys here, before any CrewAI import.
+if "raw_trace" not in st.session_state:
+    st.session_state.raw_trace = []
+if "result" not in st.session_state:
+    st.session_state.result = None
+if "generating" not in st.session_state:
+    st.session_state.generating = False
+
 # ─── CONFIGURATION ────────────────────────────────────────────────────────────
 os.environ["CREWAI_TRACING_ENABLED"] = "false"
 os.environ["CREWAI_DISABLE_TELEMETRY"] = "true"
@@ -148,10 +160,7 @@ def sg_timestamp():
 def sg_stamp():
     return datetime.now(pytz.timezone("Asia/Singapore")).strftime("%Y%m%d_%I%M%p")
 
-# ─── SESSION INIT ─────────────────────────────────────────────────────────────
-for k, v in {"result": None, "raw_trace": [], "generating": False}.items():
-    if k not in st.session_state:
-        st.session_state[k] = v
+# ─── SESSION STATE already initialised at top of file ────────────────────────
 
 # ─── HEADER ───────────────────────────────────────────────────────────────────
 st.markdown("<h1 style='text-align:center;color:#1E88E5;letter-spacing:2px;'>⚡ AVERNIXX</h1>", unsafe_allow_html=True)
